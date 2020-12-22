@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	SecretKey = "welcome to wangshubo's blog"
+	SecretKey = "welcome to anyongji's album"
 )
 
 func fatal(err error) {
@@ -98,16 +98,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, pm mux.Params) {
 		fmt.Fprintln(w, "Error extracting the key")
 		fatal(err)
 	}
-    pin := utils.GetCurrentPIN()
-    // tokenString, err := token.SignedString([]byte(SecretKey))
-    tokenString, err := token.SignedString([]byte(pin))
+    tokenString, err := token.SignedString([]byte(SecretKey))
+    // pin := utils.GetCurrentPIN()
+    // tokenString, err := token.SignedString([]byte(pin))
     
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Error while signing the token")
 		fatal(err)
 	}
-
+	utils.DelCurrentPIN()
 	response := Token{tokenString}
 	// JsonResponse(response, w)
 	render.RenderJson(w, response)
@@ -117,8 +117,8 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 
 	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
 		func(token *jwt.Token) (interface{}, error) {
-			// return []byte(SecretKey), nil
-			return []byte(utils.GetCurrentPIN()), nil
+			return []byte(SecretKey), nil
+			// return []byte(utils.GetCurrentPIN()), nil
 		})
 
 	if err == nil {

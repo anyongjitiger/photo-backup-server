@@ -22,6 +22,9 @@ func GenValidateCode(width int) string {
 	str := sb.String()
 	db := db.GetDb()
 	db.Set(PrefixPIN, []byte(str))
+	time.AfterFunc(10*time.Minute, func() { //有效期10分钟
+		DelCurrentPIN()
+	})
 	return str
 }
 
@@ -32,4 +35,9 @@ func GetCurrentPIN() string {
 	} */
 	pin, _ := db.GetDb().Get(PrefixPIN)
 	return string(pin)
+}
+
+func DelCurrentPIN() error {
+	err := db.GetDb().Del(PrefixPIN)
+	return err
 }
