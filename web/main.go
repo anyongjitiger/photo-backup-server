@@ -2,7 +2,9 @@ package taoweb
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
+	"runtime"
 
 	"github.com/anyongjitiger/photo-backup-server/config"
 	"github.com/anyongjitiger/photo-backup-server/db"
@@ -17,11 +19,16 @@ var flags struct {
 }
 
 func init() {
+	fmt.Println(runtime.GOOS)
 	flag.StringVar(&flags.addr, "addr", ":8000", "The TCP address to bind to")
 	flag.StringVar(&flags.dbAddr, "dbAddr", "127.0.0.1:7398", "The TCP address to connect to taodb")
-	flag.StringVar(&flags.albumPath, "albumPath", "/data/album", "album save path")
 	flag.StringVar(&flags.logto, "log", "stdout", "Write log messages to this file. 'stdout' and 'none' have special meanings")
 	flag.StringVar(&flags.loglevel, "log-level", "DEBUG", "The level of messages to log. One of: DEBUG, INFO, WARNING, ERROR")
+	if runtime.GOOS == "windows" {
+		flag.StringVar(&flags.albumPath, "albumPath", "D:/Album", "album save path")
+	}else{
+		flag.StringVar(&flags.albumPath, "albumPath", "/data/album", "album save path")
+	}
 }
 
 func Main() {

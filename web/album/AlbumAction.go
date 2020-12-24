@@ -47,7 +47,6 @@ func List(w http.ResponseWriter, r *http.Request) {
 		ret := kit.GetCommonRet()
 		if dataMap != nil{
 			list ,_:= mapsToList(dataMap)
-			fmt.Println(list)
 			ret.Data = list
 			ret.State =  kit.RetStateOk
 		}
