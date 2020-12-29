@@ -88,7 +88,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if err == nil {
 		// res.CTime = strconv.FormatInt(cTime.Unix(), 10)
 		// res.FilePath = deviceName + "/" +utils.GetDateYYYYMM(cTime) 
-		res.FilePath = deviceName 
+		res.FilePath = deviceName
 		netFileName := albumPath + res.FilePath + "/" + tempFileName
 		_, err := os.Stat(albumPath + res.FilePath)
 		if err != nil {
