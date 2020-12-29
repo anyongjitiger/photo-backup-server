@@ -80,14 +80,15 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 	res := model.Resource{}
-	cTime, err := utils.Photo{}.GetDate(tempStoreFile)
+	// cTime, err := utils.Photo{}.GetDate(tempStoreFile)
 	res.FileName = tempFileName
 	res.FileSize = fileInfo.Size()
 	res.NameSha256 = sha256Value
 	res.FileType = utils.GetFileType(extName)
 	if err == nil {
-		res.CTime = strconv.FormatInt(cTime.Unix(), 10)
-		res.FilePath = deviceName + "/" +utils.GetDateYYYYMM(cTime) 
+		// res.CTime = strconv.FormatInt(cTime.Unix(), 10)
+		// res.FilePath = deviceName + "/" +utils.GetDateYYYYMM(cTime) 
+		res.FilePath = deviceName 
 		netFileName := albumPath + res.FilePath + "/" + tempFileName
 		_, err := os.Stat(albumPath + res.FilePath)
 		if err != nil {
@@ -100,7 +101,6 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 				log.Info("Mkdir success:%s", albumPath+res.FilePath)
 			}
 		}
-		log.Info("netFile:%s", netFileName)
 		err = os.Rename(tempStoreFile, netFileName)
 		if err != nil {
 			log.Error("rename error:%v", err)
@@ -118,7 +118,6 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	log.Info("save res.")
 	// save to taodb
 	res.Save()
-	w.WriteHeader(http.StatusOK)
 	ret := kit.GetCommonRet()
 	ret.State = kit.RetStateOk
 	bean := Bean{}
