@@ -106,14 +106,16 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 			log.Error("rename error:%v", err)
 		}
 		// previewFileName
-		err = utils.Photo{}.CreatePreviewImg(netFileName, albumPath+res.FilePath+"/"+previewFileName)
-		if err != nil {
-			log.Error("rename error:%v", err)
-		} else {
-			res.Preview = previewFileName
-			log.Info("previewFileName:  %s", previewFileName)
+		if res.FileType == "video/mp4" || res.FileType == "video/mov" {
+			res.Preview = ""
+		}else{
+			err = utils.Photo{}.CreatePreviewImg(netFileName, albumPath+res.FilePath+"/"+previewFileName)
+			if err != nil {
+				log.Error("rename error:%v", err)
+			} else {
+				res.Preview = previewFileName
+			}
 		}
-
 	}
 	log.Info("save res.")
 	// save to taodb
