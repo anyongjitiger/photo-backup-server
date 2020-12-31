@@ -28,6 +28,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	albumPath = config.PFile.AlbumPath + "/"
 	deviceName := r.PostFormValue("device")
+	fileSize := r.PostFormValue("fileSize")
 	file, fHead, err := r.FormFile("uploadFile")
 	// 读文件错误
 	if err != nil {
@@ -46,7 +47,8 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 
 	// 生成文件sha256码
-	sha256Value := utils.GetByteSha256(data)
+	// sha256Value := utils.GetByteSha256(data)
+	sha256Value := utils.GetTxtSha256(fHead.Filename + fileSize)
 	// log.Info("sha256:%s", sha256Value)
 
 	// 获取DB中是否已经保存该文件
@@ -54,7 +56,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	temp.NameSha256 = sha256Value
 	temp.Get()
 	if temp.FileName != "" {
-		// log.Error(" 文件已经存在，文件名=%s\n", temp.FileName)
+		log.Error(" 文件已经存在，文件名=%s\n", temp.FileName)
 		return
 	}
 
@@ -64,7 +66,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 	tempFileName := tempFile + "." + extName
 
-	previewFileName := tempFile + "_" + utils.PhotoPreviewSizeStr + "." + extName
+	// previewFileName := tempFile + "_" + utils.PhotoPreviewSizeStr + "." + extName
 	tempStoreFile := albumPath + tempFile + "." + extName
 	err = ioutil.WriteFile(tempStoreFile, data, 0664)
 
@@ -106,7 +108,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 			log.Error("rename error:%v", err)
 		}
 		// previewFileName
-		if res.FileType == "video/mp4" || res.FileType == "video/mov" {
+		/* if res.FileType == "video/mp4" || res.FileType == "video/mov" {
 			res.Preview = ""
 		}else{
 			err = utils.Photo{}.CreatePreviewImg(netFileName, albumPath+res.FilePath+"/"+previewFileName)
@@ -115,7 +117,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 			} else {
 				res.Preview = previewFileName
 			}
-		}
+		} */
 	}
 	log.Info("save res.")
 	// save to taodb

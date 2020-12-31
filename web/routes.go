@@ -77,6 +77,11 @@ var routes = Routes{
 		Path:   "/upload/",
 		Handle: upload.Controller{}.Upload,
 	},
+	Route{
+		Method: "POST",
+		Path:   "/uploadCheck/",
+		Handle: wrapHandlers(upload.CheckUploaded, auth.ValidateTokenMiddleware),
+	},
 }
 
 func wrapHandler(h http.Handler) mux.Handle {
