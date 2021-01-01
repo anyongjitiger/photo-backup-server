@@ -119,7 +119,6 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 			}
 		} */
 	}
-	log.Info("save res.")
 	// save to taodb
 	res.Save()
 	ret := kit.GetCommonRet()
