@@ -4,8 +4,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
-	"time"
+
+	// "strconv"
+	// "time"
 
 	"github.com/anyongjitiger/photo-backup-server/config"
 	"github.com/anyongjitiger/photo-backup-server/db/model"
@@ -30,6 +31,19 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	deviceName := r.PostFormValue("device")
 	fileSize := r.PostFormValue("fileSize")
 	file, fHead, err := r.FormFile("uploadFile")
+	log.Info(fHead.Filename)
+	if err == nil {
+		_, err := os.Stat(albumPath + deviceName)
+		if err != nil {
+			log.Error("Read dir error:%v", err)
+			err = os.MkdirAll(albumPath+deviceName, 0765)
+			if err != nil {
+				log.Error("Mkdir error:%v", err)
+			} else {
+				log.Info("Mkdir success:%s", albumPath+deviceName)
+			}
+		}
+	}
 	// 读文件错误
 	if err != nil {
 		common.SendErrorResponse(w, http.StatusInternalServerError, "Internal Server Error.")
@@ -63,11 +77,11 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	fileName := fHead.Filename
 	log.Info("originFileName: %s", fileName)
 
-	tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
-	tempFileName := tempFile + "." + extName
+	// tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+	// tempFileName := tempFile + "." + extName
 
 	// previewFileName := tempFile + "_" + utils.PhotoPreviewSizeStr + "." + extName
-	tempStoreFile := albumPath + tempFile + "." + extName
+	tempStoreFile := albumPath + deviceName + "/" + fHead.Filename
 	err = ioutil.WriteFile(tempStoreFile, data, 0664)
 
 	if err != nil {
@@ -83,42 +97,11 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 	res := model.Resource{}
 	// cTime, err := utils.Photo{}.GetDate(tempStoreFile)
-	res.FileName = tempFileName
+	res.FileName = fHead.Filename
 	res.FileSize = fileInfo.Size()
 	res.NameSha256 = sha256Value
 	res.FileType = utils.GetFileType(extName)
-	if err == nil {
-		// res.CTime = strconv.FormatInt(cTime.Unix(), 10)
-		// res.FilePath = deviceName + "/" +utils.GetDateYYYYMM(cTime) 
-		res.FilePath = deviceName
-		netFileName := albumPath + res.FilePath + "/" + tempFileName
-		_, err := os.Stat(albumPath + res.FilePath)
-		if err != nil {
-			log.Error("Read dir error:%v", err)
-			err = os.MkdirAll(albumPath+res.FilePath, 0765)
-			//err = os.MkdirAll(albumPath+res.FilePath, 0664)
-			if err != nil {
-				log.Error("Mkdir error:%v", err)
-			} else {
-				log.Info("Mkdir success:%s", albumPath+res.FilePath)
-			}
-		}
-		err = os.Rename(tempStoreFile, netFileName)
-		if err != nil {
-			log.Error("rename error:%v", err)
-		}
-		// previewFileName
-		/* if res.FileType == "video/mp4" || res.FileType == "video/mov" {
-			res.Preview = ""
-		}else{
-			err = utils.Photo{}.CreatePreviewImg(netFileName, albumPath+res.FilePath+"/"+previewFileName)
-			if err != nil {
-				log.Error("rename error:%v", err)
-			} else {
-				res.Preview = previewFileName
-			}
-		} */
-	}
+	
 	// save to taodb
 	res.Save()
 	ret := kit.GetCommonRet()
