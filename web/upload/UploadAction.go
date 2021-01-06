@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-
-	// "strconv"
-	// "time"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/anyongjitiger/photo-backup-server/config"
 	"github.com/anyongjitiger/photo-backup-server/db/model"
@@ -30,8 +30,8 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	albumPath = config.PFile.AlbumPath + "/"
 	deviceName := r.PostFormValue("device")
 	fileSize := r.PostFormValue("fileSize")
-	file, fHead, err := r.FormFile("uploadFile")
-	log.Info(fHead.Filename)
+	fileName := r.PostFormValue("fileName")
+	file, _, err := r.FormFile("uploadFile")
 	if err == nil {
 		_, err := os.Stat(albumPath + deviceName)
 		if err != nil {
@@ -52,7 +52,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	defer file.Close()
 
 	// 获取文件的扩展名
-	extName := utils.GetFileExt(fHead.Filename)
+	extName := utils.GetFileExt(fileName)
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Error("Read file error : %v", err)
@@ -62,7 +62,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	// 生成文件sha256码
 	// sha256Value := utils.GetByteSha256(data)
-	sha256Value := utils.GetTxtSha256(fHead.Filename + fileSize)
+	sha256Value := utils.GetTxtSha256(fileName + fileSize)
 	// log.Info("sha256:%s", sha256Value)
 
 	// 获取DB中是否已经保存该文件
@@ -74,14 +74,16 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	fileName := fHead.Filename
 	log.Info("originFileName: %s", fileName)
 
-	// tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+	tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 	// tempFileName := tempFile + "." + extName
 
 	// previewFileName := tempFile + "_" + utils.PhotoPreviewSizeStr + "." + extName
-	tempStoreFile := albumPath + deviceName + "/" + fHead.Filename
+	tempStoreFile := albumPath + deviceName + "/" + fileName
+	if exist, _ := PathExists(tempStoreFile); exist {
+		tempStoreFile = albumPath + deviceName + "/" + strings.TrimSuffix(fileName, extName) + tempFile + "."  + extName
+	}
 	err = ioutil.WriteFile(tempStoreFile, data, 0664)
 
 	if err != nil {
@@ -97,7 +99,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 	res := model.Resource{}
 	// cTime, err := utils.Photo{}.GetDate(tempStoreFile)
-	res.FileName = fHead.Filename
+	res.FileName = fileName
 	res.FileSize = fileInfo.Size()
 	res.NameSha256 = sha256Value
 	res.FileType = utils.GetFileType(extName)
@@ -112,4 +114,15 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	ret.Data = bean
 	render.RenderJson(w, ret)
 
+}
+
+func PathExists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil {
+        return true, nil
+    }
+    if os.IsNotExist(err) {
+        return false, nil
+    }
+	return false, err
 }
