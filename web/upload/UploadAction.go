@@ -31,6 +31,7 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	deviceName := r.PostFormValue("device")
 	fileSize := r.PostFormValue("fileSize")
 	fileName := r.PostFormValue("fileName")
+	log.Info("FileName: %s", fileName)
 	file, _, err := r.FormFile("uploadFile")
 	if err == nil {
 		_, err := os.Stat(albumPath + deviceName)
@@ -73,8 +74,6 @@ func (Controller) Upload(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		log.Error(" 文件已经存在，文件名=%s\n", temp.FileName)
 		return
 	}
-
-	log.Info("originFileName: %s", fileName)
 
 	tempFile := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 	// tempFileName := tempFile + "." + extName
